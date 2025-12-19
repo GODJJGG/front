@@ -37,6 +37,12 @@ const routes = [
                 meta: { permission: 'manage_vehicles' }
             },
             {
+                path: "vehicles/review",
+                name: "VehicleReview",
+                component: () => import('@/views/VehicleReview.vue'),
+                meta: { permission: 'manage_vehicles' }
+            },
+            {
                 path: "my-vehicle",
                 name: "MyVehicle",
                 component: () => import('@/views/MyVehicle.vue'),

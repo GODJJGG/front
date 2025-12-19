@@ -90,7 +90,13 @@ export const vehicleAPI = {
   deleteVehicle: (id) => request.delete(`/vehicles/${id}`),
 
   // 获取我的车辆
-  getMyVehicles: (userId) => request.get(`/vehicles/my/${userId}`)
+  getMyVehicles: (userId) => request.get(`/vehicles/my/${userId}`),
+
+  // 获取待审核车辆申请
+  getPendingVehicles: () => request.get('/vehicles/pending'),
+
+  // 审核车辆申请
+  reviewVehicle: (id, reviewData) => request.put(`/vehicles/${id}/review`, reviewData)
 }
 
 // 违章管理API

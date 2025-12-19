@@ -106,7 +106,8 @@ const getMenuList = () => {
         permission: 'manage_vehicles',
         children: [
           { path: '/home/vehicles/list', name: 'VehicleList', label: '车辆列表', permission: 'manage_vehicles' },
-          { path: '/home/vehicles/add', name: 'AddVehicle', label: '添加车辆', permission: 'manage_vehicles' }
+          { path: '/home/vehicles/add', name: 'AddVehicle', label: '添加车辆', permission: 'manage_vehicles' },
+          { path: '/home/vehicles/review', name: 'VehicleReview', label: '申请审核', permission: 'manage_vehicles' }
         ]
       },
       {
