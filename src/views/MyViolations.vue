@@ -69,14 +69,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { violationAPI } from '@/api'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const violations = ref([])
 const loading = ref(false)
 
 const loadMyViolations = async () => {
   try {
     loading.value = true
-    const response = await violationAPI.getMyViolations()
+    const response = await violationAPI.getMyViolations(userStore.user.id)
     violations.value = response.data || response
   } catch (error) {
     console.error('获取我的违章记录失败:', error)

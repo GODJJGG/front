@@ -25,14 +25,16 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { violationAPI } from '@/api'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const reports = ref([])
 const loading = ref(false)
 
 const loadMyReports = async () => {
   try {
     loading.value = true
-    const response = await violationAPI.getMyViolations()
+    const response = await violationAPI.getMyViolations(userStore.user.id)
     // 转换数据格式以适配表格显示
     reports.value = (response.data || response).map(item => ({
       id: item.id,

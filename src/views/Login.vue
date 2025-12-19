@@ -3,6 +3,15 @@
     <el-card class="login-card">
       <h2>学生电动车管理系统</h2>
 
+      <!-- 测试账号提示 -->
+      <el-alert
+        title="测试账号"
+        description="管理员: admin/123456 | 老师: teacher/123456 | 学生: student/123456"
+        type="info"
+        :closable="false"
+        style="margin-bottom: 20px;"
+      />
+
       <!-- 标签页切换 -->
       <el-tabs v-model="activeTab" @tab-click="handleTabClick">
         <el-tab-pane label="登录" name="login">
@@ -130,6 +139,36 @@ const onLogin = async () => {
       userStore.setToken('admin-token')
       userStore.setUser(adminUser)
       ElMessage.success('管理员登录成功')
+      router.push('/home/main')
+      return
+    }
+
+    // 检查老师测试账号
+    if (loginForm.username === 'teacher' && loginForm.password === '123456') {
+      const teacherUser = {
+        id: 2,
+        username: 'teacher',
+        role: 'teacher',
+        permissions: ['view_main', 'report_violations', 'view_reports']
+      }
+      userStore.setToken('teacher-token')
+      userStore.setUser(teacherUser)
+      ElMessage.success('老师登录成功')
+      router.push('/home/main')
+      return
+    }
+
+    // 检查学生测试账号
+    if (loginForm.username === 'student' && loginForm.password === '123456') {
+      const studentUser = {
+        id: 3,
+        username: 'student',
+        role: 'student',
+        permissions: ['view_main', 'apply_vehicle', 'view_my_violations']
+      }
+      userStore.setToken('student-token')
+      userStore.setUser(studentUser)
+      ElMessage.success('学生登录成功')
       router.push('/home/main')
       return
     }

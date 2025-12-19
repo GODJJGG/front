@@ -72,7 +72,7 @@ const loading = ref(false)
 const loadMyVehicle = async () => {
   try {
     loading.value = true
-    const response = await vehicleAPI.getMyVehicles()
+    const response = await vehicleAPI.getMyVehicles(userStore.user.id)
     if (response.data && response.data.length > 0) {
       vehicle.value = response.data[0] // 假设用户只有一辆车
     }

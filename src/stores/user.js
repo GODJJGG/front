@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import config from '@/config'
 
 export const useUserStore = defineStore('user', () => {
   const user = ref(null)
-  const token = ref(localStorage.getItem('token') || '')
+  const token = ref(localStorage.getItem(config.TOKEN_KEY) || '')
   const permissions = ref([])
 
   const setUser = (userData) => {
@@ -13,14 +14,14 @@ export const useUserStore = defineStore('user', () => {
 
   const setToken = (newToken) => {
     token.value = newToken
-    localStorage.setItem('token', newToken)
+    localStorage.setItem(config.TOKEN_KEY, newToken)
   }
 
   const logout = () => {
     user.value = null
     token.value = ''
     permissions.value = []
-    localStorage.removeItem('token')
+    localStorage.removeItem(config.TOKEN_KEY)
   }
 
   const hasPermission = (permission) => {

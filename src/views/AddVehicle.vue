@@ -48,6 +48,9 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { vehicleAPI, fileAPI } from '@/api'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 const form = reactive({
   id: '',
@@ -93,7 +96,8 @@ const onSubmit = async () => {
         // 提交车辆申请
         const vehicleData = {
           ...form,
-          photos: photoUrls
+          photos: photoUrls,
+          studentId: userStore.user.id
         }
 
         await vehicleAPI.addVehicle(vehicleData)

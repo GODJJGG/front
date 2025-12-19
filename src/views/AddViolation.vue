@@ -48,6 +48,9 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { violationAPI, fileAPI } from '@/api'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 const form = reactive({
   licensePlate: '',
@@ -93,7 +96,8 @@ const onSubmit = async () => {
           licensePlate: form.licensePlate,
           violationTime: form.violationTime,
           content: form.violationContent,
-          photos: photoUrls
+          photos: photoUrls,
+          reporterId: userStore.user.id
         }
 
         await violationAPI.reportViolation(violationData)

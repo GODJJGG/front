@@ -1,142 +1,129 @@
-// API基础配置
-const API_BASE_URL = 'http://localhost:8080/api' // 根据实际后端地址修改
+import axios from 'axios'
+import config from '@/config'
 
-// 通用请求函数
-const request = async (url, options = {}) => {
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers
-    },
-    ...options
+// 创建axios实例
+const request = axios.create({
+  baseURL: config.API_BASE_URL,
+  timeout: config.TIMEOUT,
+  headers: {
+    'Content-Type': 'application/json'
   }
+})
 
-  // 添加token到请求头
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${url}`, config)
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.message || '请求失败')
+// 请求拦截器 - 自动添加token
+request.interceptors.request.use(
+  config => {
+    // 添加token到请求头
+    const token = localStorage.getItem(config.TOKEN_KEY || 'token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
-
-    return data
-  } catch (error) {
-    console.error('API请求失败:', error)
-    throw error
+    return config
+  },
+  error => {
+    return Promise.reject(error)
   }
-}
+)
+
+// 响应拦截器 - 处理响应和错误
+request.interceptors.response.use(
+  response => {
+    // 直接返回data部分
+    return response.data
+  },
+  error => {
+    console.error('API请求失败:', error)
+    // 处理HTTP错误状态
+    if (error.response) {
+      const { status, data } = error.response
+      switch (status) {
+        case 401:
+          // 未授权，清除token并跳转到登录页
+          localStorage.removeItem(config.TOKEN_KEY)
+          window.location.href = '/'
+          break
+        case 403:
+          console.error('权限不足')
+          break
+        case 500:
+          console.error('服务器错误')
+          break
+        default:
+          console.error(`请求失败: ${status}`)
+      }
+      // 返回后端错误信息
+      return Promise.reject(new Error(data?.message || `请求失败: ${status}`))
+    } else if (error.request) {
+      // 网络错误
+      return Promise.reject(new Error('网络连接失败，请检查网络连接'))
+    } else {
+      // 其他错误
+      return Promise.reject(error)
+    }
+  }
+)
 
 // 认证相关API
 export const authAPI = {
   // 登录
-  login: (username, password) => request('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ username, password })
-  }),
+  login: (username, password) => request.post('/auth/login', { username, password }),
 
   // 注册
-  register: (userData) => request('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(userData)
-  }),
+  register: (userData) => request.post('/auth/register', userData),
 
   // 登出
-  logout: () => request('/auth/logout', {
-    method: 'POST'
-  })
+  logout: () => request.post('/auth/logout')
 }
 
 // 车辆管理API
 export const vehicleAPI = {
   // 获取车辆列表
-  getVehicles: (params = {}) => request('/vehicles', {
-    method: 'GET',
-    body: params ? new URLSearchParams(params) : undefined
-  }),
+  getVehicles: (params = {}) => request.get('/vehicles', { params }),
 
   // 添加车辆
-  addVehicle: (vehicleData) => request('/vehicles', {
-    method: 'POST',
-    body: JSON.stringify(vehicleData)
-  }),
+  addVehicle: (vehicleData) => request.post('/vehicles', vehicleData),
 
   // 更新车辆信息
-  updateVehicle: (id, vehicleData) => request(`/vehicles/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(vehicleData)
-  }),
+  updateVehicle: (id, vehicleData) => request.put(`/vehicles/${id}`, vehicleData),
 
   // 删除车辆
-  deleteVehicle: (id) => request(`/vehicles/${id}`, {
-    method: 'DELETE'
-  }),
+  deleteVehicle: (id) => request.delete(`/vehicles/${id}`),
 
   // 获取我的车辆
-  getMyVehicles: () => request('/vehicles/my', {
-    method: 'GET'
-  })
+  getMyVehicles: (userId) => request.get(`/vehicles/my/${userId}`)
 }
 
 // 违章管理API
 export const violationAPI = {
   // 获取违章记录列表
-  getViolations: (params = {}) => request('/violations', {
-    method: 'GET',
-    body: params ? new URLSearchParams(params) : undefined
-  }),
+  getViolations: (params = {}) => request.get('/violations', { params }),
 
   // 申报违章
-  reportViolation: (violationData) => request('/violations', {
-    method: 'POST',
-    body: JSON.stringify(violationData)
-  }),
+  reportViolation: (violationData) => request.post('/violations', violationData),
 
   // 审核违章申报
-  reviewViolation: (id, reviewData) => request(`/violations/${id}/review`, {
-    method: 'PUT',
-    body: JSON.stringify(reviewData)
-  }),
+  reviewViolation: (id, reviewData) => request.put(`/violations/${id}/review`, reviewData),
 
   // 获取待审核违章
-  getPendingViolations: () => request('/violations/pending', {
-    method: 'GET'
-  }),
+  getPendingViolations: () => request.get('/violations/pending'),
 
   // 获取我的违章申报
-  getMyViolations: () => request('/violations/my', {
-    method: 'GET'
-  }),
+  getMyViolations: (userId) => request.get(`/violations/my/${userId}`),
 
   // 获取已审核违章记录
-  getApprovedViolations: () => request('/violations/approved', {
-    method: 'GET'
-  })
+  getApprovedViolations: () => request.get('/violations/approved')
 }
 
 // 用户管理API
 export const userAPI = {
   // 获取用户信息
-  getUserInfo: () => request('/user/info', {
-    method: 'GET'
-  }),
+  getUserInfo: () => request.get('/user/info'),
 
   // 更新用户信息
-  updateUserInfo: (userData) => request('/user/info', {
-    method: 'PUT',
-    body: JSON.stringify(userData)
-  }),
+  updateUserInfo: (userData) => request.put('/user/info', userData),
 
   // 获取用户列表（管理员）
-  getUsers: (params = {}) => request('/users', {
-    method: 'GET',
-    body: params ? new URLSearchParams(params) : undefined
-  })
+  getUsers: (params = {}) => request.get('/users', { params })
 }
 
 // 文件上传API
@@ -147,15 +134,10 @@ export const fileAPI = {
     formData.append('file', file)
     formData.append('type', type)
 
-    return request('/upload', {
-      method: 'POST',
+    return request.post('/upload', formData, {
       headers: {
-        // 不要设置Content-Type，让浏览器自动设置
-        ...Object.fromEntries(
-          Object.entries(request.headers || {}).filter(([key]) => key !== 'Content-Type')
-        )
-      },
-      body: formData
+        'Content-Type': 'multipart/form-data'
+      }
     })
   },
 
@@ -167,14 +149,10 @@ export const fileAPI = {
     })
     formData.append('type', type)
 
-    return request('/upload/batch', {
-      method: 'POST',
+    return request.post('/upload/batch', formData, {
       headers: {
-        ...Object.fromEntries(
-          Object.entries(request.headers || {}).filter(([key]) => key !== 'Content-Type')
-        )
-      },
-      body: formData
+        'Content-Type': 'multipart/form-data'
+      }
     })
   }
 }
