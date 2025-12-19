@@ -78,18 +78,7 @@ const loadMyVehicle = async () => {
     }
   } catch (error) {
     console.error('获取我的车辆失败:', error)
-    // 临时使用假数据作为后备
-    if (userStore.user?.username === 'student') {
-      vehicle.value = {
-        licensePlate: '浙A12345',
-        model: '电动车-小牛',
-        approvedTime: '2024-12-15 14:30:00',
-        photos: [
-          'https://via.placeholder.com/200x150?text=车辆正面',
-          'https://via.placeholder.com/200x150?text=车辆侧面'
-        ]
-      }
-    }
+    vehicle.value = null
   } finally {
     loading.value = false
   }

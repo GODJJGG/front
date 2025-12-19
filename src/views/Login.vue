@@ -149,7 +149,7 @@ const onLogin = async () => {
         id: 2,
         username: 'teacher',
         role: 'teacher',
-        permissions: ['view_main', 'report_violations', 'view_reports']
+        permissions: ['view_main', 'manage_violations']
       }
       userStore.setToken('teacher-token')
       userStore.setUser(teacherUser)
@@ -164,7 +164,7 @@ const onLogin = async () => {
         id: 3,
         username: 'student',
         role: 'student',
-        permissions: ['view_main', 'apply_vehicle', 'view_my_violations']
+        permissions: ['view_main', 'manage_vehicles', 'manage_violations']
       }
       userStore.setToken('student-token')
       userStore.setUser(studentUser)

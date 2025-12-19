@@ -45,30 +45,7 @@ const loadMyReports = async () => {
     }))
   } catch (error) {
     console.error('获取我的申报失败:', error)
-    // 临时使用假数据作为后备
-    reports.value = [
-      {
-        id: 1,
-        content: '车辆牌照: 浙A12345, 违章时间: 2024-12-19 10:30:00, 违章内容: 违规停车',
-        submitTime: '2024-12-19 10:35:00',
-        status: '已处理',
-        processResult: '已通知车主，罚款50元'
-      },
-      {
-        id: 2,
-        content: '车辆牌照: 浙B67890, 违章时间: 2024-12-18 14:20:00, 违章内容: 超速行驶',
-        submitTime: '2024-12-18 14:25:00',
-        status: '处理中',
-        processResult: '正在审核中'
-      },
-      {
-        id: 3,
-        content: '车辆牌照: 浙C11111, 违章时间: 2024-12-17 09:15:00, 违章内容: 其他违规',
-        submitTime: '2024-12-17 09:20:00',
-        status: '未处理',
-        processResult: '等待处理'
-      }
-    ]
+    reports.value = []
   } finally {
     loading.value = false
   }

@@ -84,34 +84,7 @@ const loadPendingViolations = async () => {
     pendingViolations.value = response.data || response
   } catch (error) {
     console.error('获取待审核违章失败:', error)
-    // 临时使用假数据作为后备
-    pendingViolations.value = [
-      {
-        id: 1,
-        reporter: '张老师',
-        licensePlate: '浙A12345',
-        violationTime: '2024-12-18 14:20:00',
-        location: '校园东门停车场',
-        content: '违规停车，占用消防通道',
-        submitTime: '2024-12-18 14:25:00',
-        photos: [
-          'https://via.placeholder.com/200x150?text=违章现场1',
-          'https://via.placeholder.com/200x150?text=违章现场2'
-        ]
-      },
-      {
-        id: 2,
-        reporter: '李老师',
-        licensePlate: '浙B67890',
-        violationTime: '2024-12-17 09:15:00',
-        location: '教学楼前广场',
-        content: '超速行驶',
-        submitTime: '2024-12-17 09:20:00',
-        photos: [
-          'https://via.placeholder.com/200x150?text=违章现场3'
-        ]
-      }
-    ]
+    pendingViolations.value = []
   } finally {
     loading.value = false
   }

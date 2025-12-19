@@ -82,32 +82,7 @@ const loadMyViolations = async () => {
     violations.value = response.data || response
   } catch (error) {
     console.error('获取我的违章记录失败:', error)
-    // 临时使用假数据作为后备
-    violations.value = [
-      {
-        id: 1,
-        violationTime: '2024-12-18 14:20:00',
-        location: '校园东门停车场',
-        content: '违规停车，占用消防通道',
-        status: '已处理',
-        processResult: '已通知车主，罚款50元',
-        photos: [
-          'https://via.placeholder.com/200x150?text=违章现场1',
-          'https://via.placeholder.com/200x150?text=违章现场2'
-        ]
-      },
-      {
-        id: 2,
-        violationTime: '2024-12-15 09:15:00',
-        location: '教学楼前广场',
-        content: '超速行驶',
-        status: '处理中',
-        processResult: '正在审核中',
-        photos: [
-          'https://via.placeholder.com/200x150?text=违章现场3'
-        ]
-      }
-    ]
+    violations.value = []
   } finally {
     loading.value = false
   }
