@@ -161,7 +161,7 @@ const onLogin = async () => {
     // 检查学生测试账号
     if (loginForm.username === 'student' && loginForm.password === '123456') {
       const studentUser = {
-        id: 3,
+        id: 2024001,
         username: 'student',
         role: 'student',
         permissions: ['view_main', 'manage_vehicles', 'manage_violations']
@@ -177,8 +177,18 @@ const onLogin = async () => {
     const response = await authAPI.login(loginForm.username, loginForm.password)
 
     if (response.success) {
-      userStore.setToken(response.token)
-      userStore.setUser(response.user)
+      // 后端返回的是Result<Login>，data中包含用户信息
+      // 由于后端未返回token，这里使用用户名作为临时token
+      const user = response.data
+      
+      // 临时修复：如果后端未返回权限，给予默认权限
+      if (!user.permissions) {
+        user.permissions = ['view_main', 'manage_vehicles', 'manage_violations']
+        user.role = 'student'
+      }
+
+      userStore.setToken('token-' + user.username)
+      userStore.setUser(user)
       ElMessage.success('登录成功')
       router.push('/home/main')
     } else {

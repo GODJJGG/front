@@ -70,47 +70,23 @@ const loadPendingVehicles = async () => {
   try {
     loading.value = true
     const response = await vehicleAPI.getPendingVehicles()
-    pendingVehicles.value = response.data || response
+    
+    // 映射后端数据到前端表格格式，并过滤出待审核(status=1)且非违章记录的记录
+    const rawList = response.data || []
+    pendingVehicles.value = rawList
+      .filter(item => item.status == 1 && (!item.address || !item.address.startsWith('VIOLATION')))
+      .map(item => ({
+        id: item.catNumber, // 车牌号作为ID
+        studentId: item.userId, // 车主ID
+        studentName: '未知', // 后端未返回姓名
+        type: item.address ? item.address.split('-')[0] : '未知', // 从address解析类型
+        applyTime: item.createTime,
+        originalId: item.id // 保存原始数据库ID用于操作
+      }))
 
-    // 临时添加测试数据
-    if (pendingVehicles.value.length === 0) {
-      pendingVehicles.value = [
-        {
-          id: 'V001',
-          studentId: '2024001',
-          studentName: '张三',
-          type: '电动车',
-          applyTime: '2024-12-19 10:00:00'
-        },
-        {
-          id: 'V002',
-          studentId: '2024002',
-          studentName: '李四',
-          type: '自行车',
-          applyTime: '2024-12-19 11:30:00'
-        }
-      ]
-    }
   } catch (error) {
     console.error('获取待审核车辆失败:', error)
-    ElMessage.error('获取待审核车辆失败')
-    // 临时使用测试数据
-    pendingVehicles.value = [
-      {
-        id: 'V001',
-        studentId: '2024001',
-        studentName: '张三',
-        type: '电动车',
-        applyTime: '2024-12-19 10:00:00'
-      },
-      {
-        id: 'V002',
-        studentId: '2024002',
-        studentName: '李四',
-        type: '自行车',
-        applyTime: '2024-12-19 11:30:00'
-      }
-    ]
+    ElMessage.error('获取数据失败')
   } finally {
     loading.value = false
   }
@@ -131,13 +107,16 @@ const submitReview = async () => {
   try {
     reviewLoading.value = true
 
-    const reviewData = {
-      status: reviewResult.value
+    if (reviewResult.value === 'approved') {
+      // 通过审核
+      await vehicleAPI.reviewVehicle(currentReviewVehicle.value.originalId, { status: 2 })
+      ElMessage.success('审核已通过')
+    } else {
+      // 驳回审核 (删除申请)
+      await vehicleAPI.deleteVehicle(currentReviewVehicle.value.originalId)
+      ElMessage.success('审核已驳回')
     }
 
-    await vehicleAPI.reviewVehicle(currentReviewVehicle.value.id, reviewData)
-
-    ElMessage.success('审核完成')
     reviewDialogVisible.value = false
     loadPendingVehicles() // 重新加载列表
   } catch (error) {

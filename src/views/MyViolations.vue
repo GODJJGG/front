@@ -78,8 +78,36 @@ const loading = ref(false)
 const loadMyViolations = async () => {
   try {
     loading.value = true
+    // 获取所有车辆和违章数据
     const response = await violationAPI.getMyViolations(userStore.user.id)
-    violations.value = response.data || response
+    const allData = response.data || []
+
+    // 1. 找出当前用户拥有的车辆 (非违章记录且userId匹配)
+    const myCars = allData.filter(item => 
+      String(item.userId) === String(userStore.user.id) && 
+      (!item.address || !item.address.startsWith('VIOLATION'))
+    )
+    const myPlates = myCars.map(car => car.catNumber)
+
+    // 2. 找出针对这些车辆的已审核通过(status=2)的违章记录
+    const myViolationsList = allData.filter(item => 
+      item.address && 
+      item.address.startsWith('VIOLATION') && 
+      item.status === 2 && 
+      myPlates.includes(item.catNumber)
+    )
+
+    // 3. 映射数据
+    violations.value = myViolationsList.map(item => ({
+      id: item.id,
+      status: '已处理',
+      violationTime: item.createTime,
+      location: '未知',
+      content: item.address.split('|')[1] || '无内容',
+      photos: item.pic ? [item.pic] : [],
+      processResult: item.processingresult
+    }))
+
   } catch (error) {
     console.error('获取我的违章记录失败:', error)
     violations.value = []

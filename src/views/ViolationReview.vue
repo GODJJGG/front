@@ -81,7 +81,22 @@ const loadPendingViolations = async () => {
   try {
     loading.value = true
     const response = await violationAPI.getPendingViolations()
-    pendingViolations.value = response.data || response
+    const rawList = response.data || []
+    
+    // 过滤出违章记录(address以VIOLATION开头)且待审核(status=1)
+    pendingViolations.value = rawList
+      .filter(item => item.status == 1 && item.address && item.address.startsWith('VIOLATION'))
+      .map(item => ({
+        id: item.id,
+        reporter: item.userId, // 申报人ID
+        licensePlate: item.catNumber,
+        violationTime: item.createTime, // 使用创建时间作为违章时间
+        location: '未知', // 后端未存储地点
+        content: item.address.split('|')[1] || '无内容', // 从address解析内容
+        submitTime: item.createTime,
+        photos: item.pic ? [item.pic] : [],
+        originalId: item.id
+      }))
   } catch (error) {
     console.error('获取待审核违章失败:', error)
     pendingViolations.value = []
@@ -130,7 +145,8 @@ const rejectViolation = async (row) => {
     )
 
     loading.value = true
-    await violationAPI.reviewViolation(row.id, { status: 'rejected' })
+    // 拒绝即删除
+    await violationAPI.deleteViolation(row.originalId)
     ElMessage.success('审核拒绝成功')
     loadPendingViolations() // 重新加载列表
 
@@ -152,9 +168,10 @@ const submitProcessResult = async () => {
 
   try {
     loading.value = true
-    await violationAPI.reviewViolation(currentViolation.value.id, {
-      status: 'approved',
-      processResult: processResult.value
+    // 通过审核 (status=2)
+    await violationAPI.reviewViolation(currentViolation.value.originalId, {
+      status: 2,
+      processingresult: processResult.value
     })
     processDialogVisible.value = false
     ElMessage.success('审核通过成功')

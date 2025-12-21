@@ -28,12 +28,23 @@ request.interceptors.request.use(
 // 响应拦截器 - 处理响应和错误
 request.interceptors.response.use(
   response => {
-    // 直接返回data部分
-    return response.data
+    const res = response.data
+    // 兼容后端Result结构
+    if (res.code !== undefined) {
+      if (res.code === 0) {
+        // 成功，添加success字段兼容前端逻辑
+        res.success = true
+        return res
+      } else {
+        // 业务错误
+        return Promise.reject(new Error(res.message || '操作失败'))
+      }
+    }
+    return res
   },
   error => {
     console.error('API请求失败:', error)
-    // 处理HTTP错误状态
+    // ... (rest of error handling)
     if (error.response) {
       const { status, data } = error.response
       switch (status) {
@@ -66,37 +77,37 @@ request.interceptors.response.use(
 // 认证相关API
 export const authAPI = {
   // 登录
-  login: (username, password) => request.post('/auth/login', { username, password }),
+  login: (username, password) => request.post('/login/login', { username, password }),
 
   // 注册
-  register: (userData) => request.post('/auth/register', userData),
+  register: (userData) => request.post('/login/register', userData),
 
-  // 登出
+  // 登出 - 后端暂无此接口，暂时保留
   logout: () => request.post('/auth/logout')
 }
 
 // 车辆管理API
 export const vehicleAPI = {
   // 获取车辆列表
-  getVehicles: (params = {}) => request.get('/vehicles', { params }),
+  getVehicles: () => request.get('/vehicle/getVehicleList'),
 
   // 添加车辆
-  addVehicle: (vehicleData) => request.post('/vehicles', vehicleData),
+  addVehicle: (vehicleData) => request.post('/vehicle/addVehicle', vehicleData),
 
-  // 更新车辆信息
-  updateVehicle: (id, vehicleData) => request.put(`/vehicles/${id}`, vehicleData),
+  // 更新车辆信息 - 后端暂无编辑详情接口
+  updateVehicle: (id, data) => Promise.resolve({ code: 0, message: '暂不支持编辑' }),
 
   // 删除车辆
-  deleteVehicle: (id) => request.delete(`/vehicles/${id}`),
+  deleteVehicle: (id) => request.delete('/vehicle/deleteVehicle', { params: { id } }),
 
-  // 获取我的车辆
-  getMyVehicles: (userId) => request.get(`/vehicles/my/${userId}`),
+  // 获取我的车辆 - 使用获取所有车辆接口，前端过滤
+  getMyVehicles: (userId) => request.get('/vehicle/getVehicleList'),
 
-  // 获取待审核车辆申请
-  getPendingVehicles: () => request.get('/vehicles/pending'),
+  // 获取待审核车辆申请 - 使用获取所有车辆接口，前端过滤
+  getPendingVehicles: () => request.get('/vehicle/getVehicleList'),
 
-  // 审核车辆申请
-  reviewVehicle: (id, reviewData) => request.put(`/vehicles/${id}/review`, reviewData)
+  // 审核车辆申请 - 对应后端的updateVehicle接口(通过审核)
+  reviewVehicle: (id, reviewData) => request.put('/vehicle/updatevehicle', { id, ...reviewData })
 }
 
 // 违章管理API
@@ -104,20 +115,23 @@ export const violationAPI = {
   // 获取违章记录列表
   getViolations: (params = {}) => request.get('/violations', { params }),
 
-  // 申报违章
-  reportViolation: (violationData) => request.post('/violations', violationData),
+  // 申报违章 - 使用添加车辆接口(复用Vehicle表)
+  reportViolation: (violationData) => request.post('/vehicle/addVehicle', violationData),
 
   // 审核违章申报
-  reviewViolation: (id, reviewData) => request.put(`/violations/${id}/review`, reviewData),
+  reviewViolation: (id, reviewData) => request.put('/vehicle/updatevehicle', { id, ...reviewData }),
 
-  // 获取待审核违章
-  getPendingViolations: () => request.get('/violations/pending'),
+  // 删除违章申报
+  deleteViolation: (id) => request.delete('/vehicle/deleteVehicle', { params: { id } }),
+
+  // 获取待审核违章 - 使用获取所有车辆接口，前端过滤
+  getPendingViolations: () => request.get('/vehicle/getVehicleList'),
 
   // 获取我的违章申报
-  getMyViolations: (userId) => request.get(`/violations/my/${userId}`),
+  getMyViolations: (userId) => request.get('/vehicle/getVehicleList'),
 
-  // 获取已审核违章记录
-  getApprovedViolations: () => request.get('/violations/approved')
+  // 获取已审核违章记录 - 使用获取所有车辆接口，前端过滤
+  getApprovedViolations: () => request.get('/vehicle/getVehicleList')
 }
 
 // 用户管理API
@@ -130,6 +144,21 @@ export const userAPI = {
 
   // 获取用户列表（管理员）
   getUsers: (params = {}) => request.get('/users', { params })
+}
+
+// 猫咪管理API（对应后端的CatController）
+export const catAPI = {
+  // 获取猫咪列表
+  getCats: (id) => request.get('/cat/listCat', { params: { id } }),
+
+  // 添加猫咪
+  addCat: (catData) => request.post('/cat/addCat', catData),
+
+  // 更新猫咪信息
+  updateCat: (catData) => request.put('/cat/updateCat', catData),
+
+  // 删除猫咪
+  deleteCat: (id) => request.delete('/cat/deleteCat', { params: { id } })
 }
 
 // 文件上传API

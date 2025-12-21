@@ -72,9 +72,26 @@ const loading = ref(false)
 const loadMyVehicle = async () => {
   try {
     loading.value = true
+    // 获取所有车辆列表
     const response = await vehicleAPI.getMyVehicles(userStore.user.id)
-    if (response.data && response.data.length > 0) {
-      vehicle.value = response.data[0] // 假设用户只有一辆车
+    const allVehicles = response.data || []
+    
+    // 过滤出当前用户的已通过审核(status=2)的车辆
+    // 注意：这里假设后端返回的userId与当前登录用户的id一致
+    const myApprovedVehicles = allVehicles.filter(item => 
+      String(item.userId) === String(userStore.user.id) && item.status === 2
+    )
+
+    if (myApprovedVehicles.length > 0) {
+      const item = myApprovedVehicles[0]
+      vehicle.value = {
+        licensePlate: item.catNumber,
+        model: item.address ? item.address.split('-')[0] : '未知型号',
+        approvedTime: item.endTime ? item.endTime.replace('T', ' ') : '未知时间',
+        photos: item.pic ? [item.pic] : ['https://via.placeholder.com/300x200?text=No+Image']
+      }
+    } else {
+      vehicle.value = null
     }
   } catch (error) {
     console.error('获取我的车辆失败:', error)

@@ -48,7 +48,22 @@ const loadApprovedViolations = async () => {
   try {
     loading.value = true
     const response = await violationAPI.getApprovedViolations()
-    approvedViolations.value = response.data || response
+    const rawList = response.data || []
+    
+    // 过滤出已审核通过(status=2)且是违章记录(address以VIOLATION开头)的数据
+    approvedViolations.value = rawList
+      .filter(item => item.status == 2 && item.address && item.address.startsWith('VIOLATION'))
+      .map(item => ({
+        id: item.id,
+        licensePlate: item.catNumber,
+        violationTime: item.createTime,
+        location: '未知',
+        content: item.address.split('|')[1] || '无内容',
+        reporter: item.userId,
+        approvedTime: item.endTime ? item.endTime.replace('T', ' ') : '未知时间',
+        processResult: item.processingresult,
+        photos: item.pic ? [item.pic] : []
+      }))
   } catch (error) {
     console.error('获取违章记录失败:', error)
     approvedViolations.value = []

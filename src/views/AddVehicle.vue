@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { vehicleAPI, fileAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
@@ -58,6 +58,12 @@ const form = reactive({
   type: '',
   licenseType: '',
   photos: []
+})
+
+onMounted(() => {
+  if (userStore.user && userStore.user.id) {
+    form.studentId = userStore.user.id
+  }
 })
 
 const rules = {
@@ -94,10 +100,13 @@ const onSubmit = async () => {
         }
 
         // 提交车辆申请
+        // 映射前端字段到后端Vehicle实体
         const vehicleData = {
-          ...form,
-          photos: photoUrls,
-          studentId: userStore.user.id
+          catNumber: form.id, // 车辆编号 -> 车牌号
+          userId: userStore.user?.id || form.studentId, // 优先使用当前登录用户ID
+          pic: photoUrls.length > 0 ? photoUrls[0] : '', // 取第一张照片
+          address: form.type + '-' + form.licenseType, // 将类型和牌照类型存入地址字段(临时方案)
+          status: 1 // 默认为审核中
         }
 
         await vehicleAPI.addVehicle(vehicleData)

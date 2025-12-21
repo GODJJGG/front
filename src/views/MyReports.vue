@@ -35,14 +35,18 @@ const loadMyReports = async () => {
   try {
     loading.value = true
     const response = await violationAPI.getMyViolations(userStore.user.id)
-    // 转换数据格式以适配表格显示
-    reports.value = (response.data || response).map(item => ({
-      id: item.id,
-      content: `车辆牌照: ${item.licensePlate}, 违章时间: ${item.violationTime}, 违章内容: ${item.content}`,
-      submitTime: item.submitTime || item.violationTime,
-      status: item.status || '处理中',
-      processResult: item.processResult || '等待处理'
-    }))
+    const rawList = response.data || []
+    
+    // 过滤出当前用户的违章申报
+    reports.value = rawList
+      .filter(item => String(item.userId) === String(userStore.user.id) && item.address && item.address.startsWith('VIOLATION'))
+      .map(item => ({
+        id: item.id,
+        content: `车辆牌照: ${item.catNumber}, 违章内容: ${item.address.split('|')[1] || '无内容'}`,
+        submitTime: item.createTime,
+        status: item.status === 1 ? '处理中' : (item.status === 2 ? '已处理' : '未知'),
+        processResult: item.processingresult || '等待处理'
+      }))
   } catch (error) {
     console.error('获取我的申报失败:', error)
     reports.value = []

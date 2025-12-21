@@ -92,12 +92,14 @@ const onSubmit = async () => {
         }
 
         // 提交违章申报
+        // 复用Vehicle实体，映射字段
         const violationData = {
-          licensePlate: form.licensePlate,
-          violationTime: form.violationTime,
-          content: form.violationContent,
-          photos: photoUrls,
-          reporterId: userStore.user.id
+          catNumber: form.licensePlate, // 车牌号
+          userId: userStore.user.id, // 申报人ID
+          pic: photoUrls.length > 0 ? photoUrls[0] : '', // 照片
+          address: 'VIOLATION|' + form.violationContent, // 标记为违章记录并存储内容
+          processingresult: '', // 初始为空，用于存储审核反馈
+          status: 1 // 待审核
         }
 
         await violationAPI.reportViolation(violationData)

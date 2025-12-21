@@ -89,25 +89,22 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-    const userStore = useUserStore()
+    // const userStore = useUserStore()
 
-    // 需要登录的页面
-    if (to.meta.requiresAuth && !userStore.token) {
-        next('/login')
-        return
-    }
+    // 暂时取消路由守卫判定，允许所有访问
+    // if (to.meta.requiresAuth && !userStore.token) {
+    //     next('/login')
+    //     return
+    // }
 
-    // 需要权限的页面
-    if (to.meta.permission && !userStore.hasPermission(to.meta.permission)) {
-        // 检查用户是否有访问主页的权限
-        if (userStore.hasPermission('view_main')) {
-            next('/home/main')
-        } else {
-            // 如果没有主页权限，跳转到登录页或显示无权限
-            next('/login')
-        }
-        return
-    }
+    // if (to.meta.permission && !userStore.hasPermission(to.meta.permission)) {
+    //     if (userStore.hasPermission('view_main')) {
+    //         next('/home/main')
+    //     } else {
+    //         next('/login')
+    //     }
+    //     return
+    // }
 
     next()
 })

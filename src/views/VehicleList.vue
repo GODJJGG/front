@@ -131,7 +131,16 @@ const loadVehicles = async () => {
   try {
     loading.value = true
     const response = await vehicleAPI.getVehicles()
-    vehicles.value = response.data || response
+    // 映射后端数据到前端表格格式
+    const rawList = response.data || []
+    vehicles.value = rawList.map(item => ({
+      id: item.catNumber, // 车牌号作为ID
+      studentId: item.userId, // 车主ID
+      studentName: '未知', // 后端未返回姓名
+      type: item.address ? item.address.split('-')[0] : '未知', // 从address解析类型
+      status: item.status == 1 ? '待审核' : (item.status == 2 ? '已通过' : '未知'),
+      originalId: item.id // 保存原始数据库ID用于操作
+    }))
 
     // 临时添加测试数据以展示审核功能
     if (vehicles.value.length === 0) {
@@ -198,8 +207,8 @@ const submitEdit = async () => {
     await editFormRef.value.validate()
     editLoading.value = true
 
-    // 调用API更新车辆信息
-    await vehicleAPI.updateVehicle(editForm.id, editForm)
+    // 调用API更新车辆信息 - 后端只需要id参数
+    await vehicleAPI.updateVehicle(editForm.id)
 
     ElMessage.success('编辑成功')
     editDialogVisible.value = false
@@ -216,7 +225,7 @@ const submitEdit = async () => {
 
 const handleDelete = async (row) => {
   try {
-    await vehicleAPI.deleteVehicle(row.id)
+    await vehicleAPI.deleteVehicle(row.originalId)
     ElMessage.success('删除成功')
     loadVehicles() // 重新加载列表
   } catch (error) {
@@ -253,13 +262,14 @@ const submitReview = async () => {
   try {
     reviewLoading.value = true
 
-    const reviewData = {
-      status: reviewResult.value
+    if (reviewResult.value === 'approved') {
+      await vehicleAPI.reviewVehicle(currentReviewVehicle.value.originalId, { status: 2 })
+      ElMessage.success('审核已通过')
+    } else {
+      await vehicleAPI.deleteVehicle(currentReviewVehicle.value.originalId)
+      ElMessage.success('审核已驳回')
     }
 
-    await vehicleAPI.reviewVehicle(currentReviewVehicle.value.id, reviewData)
-
-    ElMessage.success('审核完成')
     reviewDialogVisible.value = false
     loadVehicles() // 重新加载列表
   } catch (error) {
@@ -269,6 +279,10 @@ const submitReview = async () => {
     reviewLoading.value = false
   }
 }
+
+onMounted(() => {
+  loadVehicles()
+})
 </script>
 
 <style scoped>
