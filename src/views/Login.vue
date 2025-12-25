@@ -3,15 +3,6 @@
     <el-card class="login-card">
       <h2>学生电动车管理系统</h2>
 
-      <!-- 测试账号提示 -->
-      <el-alert
-        title="测试账号"
-        description="管理员: admin/123456 | 老师: teacher/123456 | 学生: student/123456"
-        type="info"
-        :closable="false"
-        style="margin-bottom: 20px;"
-      />
-
       <!-- 标签页切换 -->
       <el-tabs v-model="activeTab" @tab-click="handleTabClick">
         <el-tab-pane label="登录" name="login">
@@ -39,10 +30,10 @@
             <el-form-item label="确认密码" prop="confirmPassword">
               <el-input v-model="registerForm.confirmPassword" type="password" placeholder="请再次输入密码"></el-input>
             </el-form-item>
-            <el-form-item label="角色" prop="role">
-              <el-select v-model="registerForm.role" placeholder="您的身份是">
-                <el-option label="学生" value="student"></el-option>
-                <el-option label="老师" value="teacher"></el-option>
+            <el-form-item label="角色" prop="identity">
+              <el-select v-model="registerForm.identity" placeholder="您的身份是">
+                <el-option label="学生" :value="2"></el-option>
+                <el-option label="老师" :value="1"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -84,7 +75,7 @@ const registerForm = reactive({
   username: '',
   password: '',
   confirmPassword: '',
-  role: ''
+  identity: ''
 })
 
 const registerRules = {
@@ -106,7 +97,7 @@ const registerRules = {
       trigger: 'blur'
     }
   ],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }]
+  identity: [{ required: true, message: '请选择角色', trigger: 'change' }]
 }
 
 const loginFormRef = ref()
@@ -181,10 +172,17 @@ const onLogin = async () => {
       // 由于后端未返回token，这里使用用户名作为临时token
       const user = response.data
       
-      // 临时修复：如果后端未返回权限，给予默认权限
-      if (!user.permissions) {
+      // 根据角色设置权限
+      if (user.identity === 3 || user.identity === 'admin') {
         user.permissions = ['view_main', 'manage_vehicles', 'manage_violations']
-        user.role = 'student'
+      } else if (user.identity === 1 || user.identity === 'teacher') {
+        user.permissions = ['view_main', 'manage_violations']
+      } else if (user.identity === 2 || user.identity === 'student') {
+        user.permissions = ['view_main', 'manage_vehicles', 'manage_violations']
+      } else {
+        // 默认学生权限
+        user.permissions = ['view_main', 'manage_vehicles', 'manage_violations']
+        user.identity = 2
       }
 
       userStore.setToken('token-' + user.username)
@@ -211,7 +209,7 @@ const onRegister = async () => {
     const response = await authAPI.register({
       username: registerForm.username,
       password: registerForm.password,
-      role: registerForm.role
+      identity: registerForm.identity
     })
 
     if (response.success) {

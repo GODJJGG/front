@@ -49,7 +49,7 @@ const getMenuList = () => {
     }
   ]
 
-  if (userStore.user?.role === 'teacher') {
+  if (userStore.user?.identity === 1 || userStore.user?.identity === 'teacher') {
     // 老师菜单：首页、违章申报、我的申报
     return [
       ...baseMenu,
@@ -68,7 +68,7 @@ const getMenuList = () => {
         permission: 'manage_violations'
       }
     ]
-  } else if (userStore.user?.role === 'student') {
+  } else if (userStore.user?.identity === 2 || userStore.user?.identity === 'student') {
     // 学生菜单：首页、车辆申请、我的车辆
     return [
       ...baseMenu,
